@@ -22,7 +22,7 @@ fi
 
 [[ -f $1 && -f $2 ]] || (echo "Error: check you have gainref.dm4 and defects.txt files!" && exit 1)
 
-for i in `ls TS_*.tif`
+for i in `ls -v TS_*.tif`
 do
         logFn=`echo ${i} | cut -d'_' -f1,2`
         [ -f ${i/%\.tif/_aligned.mrc} ] && continue
@@ -47,7 +47,7 @@ let count--
 echo "Aligning tilt stack $count/$total...done!"
 
 echo -en "Getting freq. values at FRC=0.5 from *align.log...\r"
-for i in `ls TS_*.tif | cut -d'_' -f1,2 | sort -u`
+for i in `ls -v TS_*.tif | cut -d'_' -f1,2 | sort -u`
 do
         grep 'FRC crossings 0.5: [0-9]\.[0-9][0-9][0-9][0-9]' ${i}_aligned.log | awk '{print $4}' > tmp1
         egrep -o '(TS_).+(.tif)' ${i}_aligned.log > tmp2
