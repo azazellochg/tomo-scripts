@@ -4,10 +4,6 @@
 SECONDS=0
 [ -z $IMOD_DIR ] && echo "Error: IMOD not found!" && exit 1
 
-total=`ls TS_*.tif | wc -l`
-[ $total -eq 0 ] && echo "No *.tif files were found!" && exit 1
-count=1
-
 if [[ $# -lt 2 || $1 == "-h" || $1 == "--help" ]]
 then
     cat <<USE
@@ -20,19 +16,23 @@ USE
     exit 0
 fi
 
-[[ -f $1 && -f $2 ]] || (echo "Error: check you have gainref.dm4 and defects.txt files!" && exit 1)
+total=`ls TS_*.tif 2>/dev/null | wc -l`
+[ $total -eq 0 ] && echo "No *.tif files were found in current directory!" && exit 1
+count=1
+
+[[ -f $1 && -f $2 ]] || (echo "Error: check that $1 and $2 files exist!" && exit 1)
 
 for i in `ls -v TS_*.tif`
 do
         logFn=`echo ${i} | cut -d'_' -f1,2`
-        [ -f ${i/%\.tif/_aligned.mrc} ] && continue
+        [ -f ${i/%\.tif/_aligned.mrc} ] && let "count++" && continue
         echo -en "Aligning tif stack $count/$total... \r"
         alignframes -InputFile ${i} \
                     -OutputImageFile ${i/%\.tif/_aligned.mrc} \
                     -GainReferenceFile $1 \
                     -RotationAndFlip -1 \
                     -CameraDefectFile $2 \
-                    -UseGPU 1 \
+                    -UseGPU 0 \
                     -PairwiseFrames -1 \
                     -Group 2 \
                     -ShiftLimit 20 \
@@ -62,4 +62,4 @@ mv *aligned.frc *_shifts.txt *_aligned.log logs/
 
 duration=$SECONDS
 echo "$(($duration / 60)) minutes and $(($duration % 60)) seconds elapsed."
-echo -e "Check output files:\n\t*_aligned.mrc\n\tlogs/*_shifts.txt\n\tlogs/*_aligned.frc\n\tlogs/*_aligned.log\nNow you can run 03-alignframes_plotter.py"
+echo -e "Check output files:\n\t*_aligned.mrc\n\tlogs/*_shifts.txt\n\tlogs/*_aligned.frc\n\tlogs/*_aligned.log\n"
